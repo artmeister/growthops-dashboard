@@ -11,6 +11,8 @@ interface ProjectPageProps {
   params: Promise<{ projectId: string }>;
 }
 
+export const dynamicParams = false;
+
 export function generateStaticParams() {
   return projects.map((project) => ({ projectId: project.id }));
 }
@@ -66,8 +68,8 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
           </div>
           <p className="project-summary__domain">Owner: {project.owner}</p>
           <p>
-            This page is server-rendered and uses a dynamic route. It is useful in a portfolio because it shows how the
-            same dataset can power both an interactive dashboard and SEO-friendly detail pages.
+            This page is pre-rendered from a dynamic route. It is useful in a portfolio because it shows how the same
+            dataset can power both an interactive dashboard and SEO-friendly detail pages.
           </p>
           <div className="score-grid">
             <article>

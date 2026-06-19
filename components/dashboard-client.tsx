@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { AnalyticsTimeline } from '@/components/analytics-timeline';
 import { AuditPanel } from '@/components/audit-panel';
 import { Backlog } from '@/components/backlog';
@@ -10,78 +10,42 @@ import { KpiCard } from '@/components/kpi-card';
 import { ProjectCard } from '@/components/project-card';
 import { Shell } from '@/components/shell';
 import { StatusBadge } from '@/components/status-badge';
-import type { ApiError, DashboardResponse, Project, Segment } from '@/lib/types';
+import { getDashboard } from '@/lib/dashboard';
+import type { DashboardResponse, Project, Segment } from '@/lib/types';
 
 interface DashboardClientProps {
   initialDashboard: DashboardResponse;
 }
 
-async function requestDashboard(segment: Segment, signal: AbortSignal) {
-  const response = await fetch(`/api/dashboard?segment=${segment}`, {
-    signal,
-    headers: {
-      'x-demo-user': 'github-visitor'
-    }
-  });
-
-  if (!response.ok) {
-    const error = (await response.json().catch(() => ({ message: response.statusText }))) as ApiError;
-    throw new Error(error.message ?? 'Dashboard request failed');
-  }
-
-  return (await response.json()) as DashboardResponse;
-}
-
 export function DashboardClient({ initialDashboard }: DashboardClientProps) {
   const [segment, setSegment] = useState<Segment>('all');
-  const [dashboard, setDashboard] = useState(initialDashboard);
   const [selectedProject, setSelectedProject] = useState<Project | undefined>(initialDashboard.projects[0]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string>();
-  const didHydrate = useRef(false);
+  const dashboard = useMemo(
+    () => (segment === 'all' ? initialDashboard : getDashboard(segment)),
+    [initialDashboard, segment]
+  );
 
-  useEffect(() => {
-    if (!didHydrate.current) {
-      didHydrate.current = true;
-      return;
-    }
+  function handleSegmentChange(nextSegment: Segment) {
+    const nextDashboard = nextSegment === 'all' ? initialDashboard : getDashboard(nextSegment);
 
-    const controller = new AbortController();
-    setLoading(true);
-    setError(undefined);
+    setSegment(nextSegment);
+    setSelectedProject((currentProject) => {
+      const matchingProject = nextDashboard.projects.find((project) => project.id === currentProject?.id);
 
-    requestDashboard(segment, controller.signal)
-      .then((nextDashboard) => {
-        setDashboard(nextDashboard);
-        setSelectedProject((current) => {
-          if (current && nextDashboard.projects.some((project) => project.id === current.id)) {
-            return current;
-          }
-
-          return nextDashboard.projects[0];
-        });
-      })
-      .catch((requestError: Error) => {
-        if (requestError.name !== 'AbortError') {
-          setError(requestError.message);
-        }
-      })
-      .finally(() => setLoading(false));
-
-    return () => controller.abort();
-  }, [segment]);
+      return matchingProject ?? nextDashboard.projects[0];
+    });
+  }
 
   const selectedStack = useMemo(() => selectedProject?.stack.join(' · ') ?? '', [selectedProject]);
 
   return (
     <Shell>
-      {error ? <div className="notice notice--error">API error: {error}</div> : null}
       <div className="sr-only" aria-live="polite">
-        {loading ? 'Updating dashboard data.' : ''}
+        Dashboard data updates instantly from the static demo dataset.
       </div>
 
       <main className="dashboard">
-        <FilterBar segments={dashboard.segments} active={segment} loading={loading} onChange={setSegment} />
+        <FilterBar segments={dashboard.segments} active={segment} loading={false} onChange={handleSegmentChange} />
 
         <section className="kpi-grid" aria-label="Key performance indicators">
           {dashboard.kpis.map((kpi) => (

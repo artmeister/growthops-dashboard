@@ -137,6 +137,29 @@ npm run start      # run production build
 npm run clean      # remove node_modules and .next
 ```
 
+## GitHub Pages
+
+The repository is configured to publish a static export to GitHub Pages:
+
+```txt
+https://artmeister.github.io/growthops-dashboard/
+```
+
+Deployment is handled by `.github/workflows/pages.yml`.
+
+The Pages workflow:
+
+```bash
+npm ci
+rm -rf app/api
+npm run typecheck
+GITHUB_PAGES=true npm run build
+```
+
+`GITHUB_PAGES=true` enables `output: 'export'`, `basePath: '/growthops-dashboard'`, trailing slashes, and static asset paths for GitHub Pages.
+
+GitHub Pages is static hosting, so runtime API route handlers do not run there. The dashboard filters and audit simulator work from the bundled demo dataset and local audit scoring logic in the browser. The `app/api/*` route handlers remain available for local/server Next.js usage.
+
 ## API
 
 The project exposes several API endpoints using Next.js Route Handlers.

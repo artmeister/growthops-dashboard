@@ -1,27 +1,23 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import type { ApiError, AuditRequest, AuditResult } from '@/lib/types';
+import type { AuditRequest, AuditResult } from '@/lib/types';
+import { calculateAudit } from '@/lib/audit-score';
+import { auditSchema } from '@/lib/validation';
 import { StatusBadge } from '@/components/status-badge';
 
 const defaultStack = ['Next.js', 'React', 'Node.js', 'CMS'];
 
 async function createAudit(payload: AuditRequest) {
-  const response = await fetch('/api/audits', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-demo-user': 'github-visitor'
-    },
-    body: JSON.stringify(payload)
-  });
+  const parsedPayload = auditSchema.safeParse(payload);
 
-  if (!response.ok) {
-    const error = (await response.json().catch(() => ({ message: response.statusText }))) as ApiError;
-    throw new Error(error.message ?? 'Audit failed');
+  if (!parsedPayload.success) {
+    throw new Error('Invalid audit payload.');
   }
 
-  return (await response.json()) as AuditResult;
+  await Promise.resolve();
+
+  return calculateAudit(parsedPayload.data);
 }
 
 export function AuditPanel() {
@@ -63,7 +59,7 @@ export function AuditPanel() {
     <section className="panel audit-panel">
       <div className="panel__heading">
         <span>Landing audit simulator</span>
-        <small>Route Handler POST</small>
+        <small>Static Pages demo</small>
       </div>
 
       <form className="audit-form" onSubmit={submit}>
