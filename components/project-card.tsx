@@ -23,6 +23,7 @@ export function ProjectCard({ project, active, onSelect }: ProjectCardProps) {
           <span>SEO {project.audit.seo}</span>
           <span>{project.metrics.conversionRate}% CR</span>
         </span>
+        <span className="project-card__release">Release {project.lastRelease}</span>
       </button>
       <Link className="project-card__link" href={`/projects/${project.id}`}>
         Open case page
