@@ -76,9 +76,11 @@ export function DashboardClient({ initialDashboard }: DashboardClientProps) {
   return (
     <Shell>
       {error ? <div className="notice notice--error">API error: {error}</div> : null}
-      {loading ? <div className="notice">Updating dashboard data through /api/dashboard...</div> : null}
+      <div className="sr-only" aria-live="polite">
+        {loading ? 'Updating dashboard data.' : ''}
+      </div>
 
-      <main>
+      <main className="dashboard">
         <FilterBar segments={dashboard.segments} active={segment} loading={loading} onChange={setSegment} />
 
         <section className="kpi-grid" aria-label="Key performance indicators">
@@ -87,7 +89,7 @@ export function DashboardClient({ initialDashboard }: DashboardClientProps) {
           ))}
         </section>
 
-        <section className="dashboard-grid">
+        <section className="dashboard-grid" id="projects">
           <div className="project-list" aria-label="Projects">
             {dashboard.projects.map((project) => (
               <ProjectCard
@@ -106,8 +108,34 @@ export function DashboardClient({ initialDashboard }: DashboardClientProps) {
                   <span>{selectedProject.name}</span>
                   <StatusBadge tone={selectedProject.stage}>{selectedProject.stage}</StatusBadge>
                 </div>
-                <p className="project-summary__domain">{selectedProject.domain}</p>
-                <p>{selectedStack}</p>
+                <div className="project-summary__intro">
+                  <div>
+                    <p className="project-summary__domain">{selectedProject.domain}</p>
+                    <p>{selectedStack}</p>
+                  </div>
+                  <div className="project-summary__release">
+                    <span>Last release</span>
+                    <strong>{selectedProject.lastRelease}</strong>
+                  </div>
+                </div>
+                <div className="project-summary__metrics" aria-label="Selected project metrics">
+                  <span>
+                    <small>Load time</small>
+                    <strong>{selectedProject.metrics.loadTimeMs}ms</strong>
+                  </span>
+                  <span>
+                    <small>Conversion</small>
+                    <strong>{selectedProject.metrics.conversionRate}%</strong>
+                  </span>
+                  <span>
+                    <small>Bounce</small>
+                    <strong>{selectedProject.metrics.bounceRate}%</strong>
+                  </span>
+                  <span>
+                    <small>API latency</small>
+                    <strong>{selectedProject.metrics.apiLatencyMs}ms</strong>
+                  </span>
+                </div>
                 <div className="score-grid">
                   <article>
                     <span>Performance</span>
@@ -140,8 +168,12 @@ export function DashboardClient({ initialDashboard }: DashboardClientProps) {
         </section>
 
         <section className="bottom-grid">
-          <AuditPanel />
-          <AnalyticsTimeline activity={dashboard.activity} />
+          <div id="audit">
+            <AuditPanel />
+          </div>
+          <div id="timeline">
+            <AnalyticsTimeline activity={dashboard.activity} />
+          </div>
         </section>
       </main>
     </Shell>
